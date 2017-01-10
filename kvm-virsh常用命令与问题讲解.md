@@ -62,4 +62,23 @@
 
 	virt-clone -o oeltest01 -n oeltest02 -f /data/test02.img 说明：以oeltest01做为源，克隆oeltest01虚拟机，并创建名称为oeltest02虚拟机，使用磁盘文件/data/test02.img
     克隆完成之后，可以用命令 virsh console oeltest02来启动一个交互conole，对虚拟机网卡IP等进行重新设置，并需要删掉网卡配置文件:/etc/udev/rules.d/70-persistent-net.rules
+    
+- virsh list 和virsh list --all可以查看本机虚拟机列表
 
+- virsh autostart base 可以设置使虚拟机在宿主机开机时启动
+
+- virsh suspend base  挂起虚拟机base
+
+- virsh resume base  恢复虚拟机base
+
+- virsh snapshot-create 用来创建虚拟机内置快照
+
+- virsh snapshot-list base （--tree） 用来列出base虚拟机的内置快照列表
+
+- qemu-img snapshot -c cnapshot-one /data/kvm-disk/centos6.5.qcow2 使用qemu-img 创建快照
+
+- qemu-img snapshot -l /data/kvm-disk/centos6.5.qcow2 使用qemu-img来列出快照列表
+
+- qemu-img snapshot -a cnapshot-one /data/kvm-disk/centos6.5.qcow2 使用qemu-img 来回滚快照
+
+- qemu-img snapshot -d cnapshot-one /data/kvm-disk/centos6.5.qcow2 使用qemu-img 来删除快照
