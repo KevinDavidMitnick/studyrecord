@@ -39,3 +39,19 @@
 - qemu-img resize 命令可以用来调整本地虚拟机磁盘大小，但是只能调大，不能调小。
 
 - virsh attach-device $domain scsi1.xml --live --persistent用来对某些设备进行热插拔，设备定义在scsi1.xml文件中（virsh detach-device用来卸载）
+
+- virt-ls 可以列出虚拟机中目录下的文件或目录，需要事先安装包libguestfs-tools
+
+- virt-what 可以用来检测当前系统是不是一个虚拟机,如果不是虚拟机,执行virt-what将不会有任何输出,如果是虚拟机,它会打印一系列关于虚拟机的’facts’(如kvm)
+
+- virt-host-validate 这个命令可以用来检测宿主机是否正确配置以运行虚拟化,如果没有加参数,它会检查它所知道的所有的虚拟化驱动,可选的可以加qemu或lxc做限制
+
+- virt-top 可以用来查看虚拟机内部的磁盘/CPU/网络性能，需要事先安装virt-top命令
+
+- virt-cat 可以用来在宿主机查看虚拟机中的文件,例如virt-cat -a /opt/image/centos2.img /etc/passwd
+
+- virt-edit 可以用vim来编辑虚拟机中的文件
+
+- virt-copy-out 可以把虚拟机中的文件复制到宿主机
+
+- virt-copy-in 用来将文件复制到虚拟机中（如果虚拟机正在运行，此命令可能出错）
