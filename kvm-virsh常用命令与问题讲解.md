@@ -37,3 +37,5 @@
 - qemu-img convert 命令可以用来对镜像格式进行转换，目前可以在vmware，vbox和kvm格式之间互相转换
 
 - qemu-img resize 命令可以用来调整本地虚拟机磁盘大小，但是只能调大，不能调小。
+
+- virsh attach-device $domain scsi1.xml --live --persistent用来对某些设备进行热插拔，设备定义在scsi1.xml文件中（virsh detach-device用来卸载）
