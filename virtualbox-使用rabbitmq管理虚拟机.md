@@ -121,6 +121,9 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+    
 ## vboxagent.py python守护进程示例
 	
 #!/bin/sh
