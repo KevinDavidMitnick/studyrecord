@@ -1,5 +1,5 @@
 1. 确认主机是否支持nested
-	lscpu 发现是否有vmx特性，有就能支持。如果要开启还需要在bios中将VT设置为enabled
+	lscpu 发现是否有vmx或者svm特性，有就能支持。如果要开启还需要在bios中将VT设置为enabled
       
 2. 启嵌套虚拟化的方法（两种方法都可）
  	在grub中的kernel那行末尾加上kvm-intel.nested=1作为启动参数加入。
@@ -10,4 +10,3 @@
 	echo 1 > /sys/module/kvm/parameters/ignore_msrs
 	cat /sys/module/kvm/parameters/ignore_msrs
 	Y
- 
