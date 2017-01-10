@@ -40,6 +40,8 @@
 
 - virsh attach-device $domain scsi1.xml --live --persistent用来对某些设备进行热插拔，设备定义在scsi1.xml文件中（virsh detach-device用来卸载）
 
+- virsh dumpxml 可以用来生成虚拟机的xml配置
+
 - virt-ls 可以列出虚拟机中目录下的文件或目录，需要事先安装包libguestfs-tools
 
 - virt-what 可以用来检测当前系统是不是一个虚拟机,如果不是虚拟机,执行virt-what将不会有任何输出,如果是虚拟机,它会打印一系列关于虚拟机的’facts’(如kvm)
