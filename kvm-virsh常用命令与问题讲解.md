@@ -57,3 +57,9 @@
 - virt-copy-out 可以把虚拟机中的文件复制到宿主机
 
 - virt-copy-in 用来将文件复制到虚拟机中（如果虚拟机正在运行，此命令可能出错）
+
+- virt-clone 可以用来克隆一个与原来虚拟机一模一样的虚拟机:
+
+	virt-clone -o oeltest01 -n oeltest02 -f /data/test02.img 说明：以oeltest01做为源，克隆oeltest01虚拟机，并创建名称为oeltest02虚拟机，使用磁盘文件/data/test02.img
+    克隆完成之后，可以用命令 virsh console oeltest02来启动一个交互conole，对虚拟机网卡IP等进行重新设置，并需要删掉网卡配置文件:/etc/udev/rules.d/70-persistent-net.rules
+
