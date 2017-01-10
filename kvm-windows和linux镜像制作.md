@@ -13,11 +13,16 @@
 
 ## Windows 镜像制作
 1. 步骤同linux镜像制作的1-4步骤。
+
 2. 实现windows开机修改密码功能（需要安装yum install libguestfs-winsupport）。
 开始输入gpedit.msc进入组策略，选择计算机配置，脚本(启动/关机)选项中的启动，它会自动创建如下目录：
    C:\Windows\System32\GroupPolicy\Machine\Scripts\Startup
   添加start.bat文件，以生成相应的注册表信息，之后删除start.bat文件。
+  
 3. 开启远程桌面连接，校对time服务（xml中需要配置为localtime格式，才是东八区）。
+
 6. 安装其他必须软件，然后采用vmware-view-virtual-desktops-windows-optimization对windows镜像进行服务精简和优化。
+
 7. 采用sysprep对镜像进行封装。
+
 8. 使用virt-sparsify对镜像进行稀疏文件压缩
