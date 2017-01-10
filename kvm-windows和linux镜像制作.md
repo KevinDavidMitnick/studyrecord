@@ -5,7 +5,7 @@
 
 3. 默认安装后的虚拟机位置在/var/lib/libvirt/images下面，也可能在自定义的别的位置。
 
-4. 安装虚拟机之后，需要安装客户端如下:spice-vdagent 和qxl驱动(这两者自带在spice-tools中。)，利用virtmanager添加virtio类型的磁盘和网卡驱动，即可完成virtio网卡安装。
+4. 安装虚拟机之后，需要安装客户端如下:spice-vdagent 和qxl驱动(这两者自带在spice-tools中。)，利用virtmanager添加virtio类型的磁盘和网卡驱动，即可完成virtio网卡安装。（如果未能正确安装，可以去spice官网下载spice-tools工具。）
 
 5. 使用virt-sysprep -d vm1 对linux进行封装，在这之前，可以安装自己喜欢的镜像。
 
