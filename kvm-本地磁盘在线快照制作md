@@ -1,0 +1,76 @@
+主要利用qemu-ga-agent代理，在宿主机发送virsh qemu-agent-command mycloud60 '{"execute":"guest-fsfreeze-freeze"}' ，在虚拟机文件系统freeze之前，调用hook函数，执行文件系统sync命令，然后利用virsh blockcopy命令进行块拷贝。
+本次宿主机环境是centos7.1,虚拟机环境是centos6.7,虚拟机域名是mycloud60  
+
+1.虚拟机的参考配置xml
+ <domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
+   <name>mycloud60</name>
+   <memory>262144</memory><currentMemory>262144</currentMemory>
+  <memtune><hard_limit>262144</hard_limit></memtune>
+   <vcpu>1</vcpu>
+   <os><type machine='pc'>hvm</type><boot dev='hd'/><boot dev='cdrom'/></os>
+  <clock sync='localtime'/>
+  <devices>
+   <emulator>/usr/libexec/qemu-kvm</emulator>
+  <disk type='file' device='disk'><driver name='qemu' type='qcow2' cache='writeback'/><source file='/data/mycloud60_vda'/>
+    <target dev='vda' bus='virtio'/></disk>
+  <disk type='file' device='cdrom'><source file=''/><target dev='hdc'/><readonly/></disk>
+  <interface type='bridge'><source bridge='br0'/><target dev='cloud1.0'/><mac address='00:16:3c:09:E2:4A'/><model type='vi
+    rtio' /></interface>
+   <graphics type='vnc' port='7001' passwd='123456' listen='0.0.0.0'/>
+  <input type='tablet'/><input type='mouse'/>
+   <channel type='unix'>(此处在宿主机创建socket文件，而在虚拟机中创建/dev/org.qemu.guest_agent.0的串口设备)
+       <source mode='bind'/>（高版本libvirt中此处的path可以省略，默认在/var/lib/libvirt/qemu/channel/target/）
+      <target type='virtio' name='org.qemu.guest_agent.0'/>（此处的name是固定值，也可以指定其他值，为了简单使用默认值）
+    </channel>
+
+  </devices>
+ <features><acpi/></features>(电源服务，为了使其能用virsh shutdown --mode acpi关机)
+ <qemu:commandline><qemu:arg value='-cpu'/><qemu:arg value='host'/></qemu:commandline>
+ </domain>
+
+2.虚拟机中安装服务
+2.1 yum install qemu-guest-agent，安装即可。
+2.2 在配置文件中/etc/sysconfig/qemu-ga 中，打开fsfreeze的选项，即设置FSFREEZE_HOOK_ENABLE=1，这样在service qemu-ga start之后，/usr/bin/qemu-ga --daemonize --method virtio-serial --path /dev/virtio-ports/org.qemu.guest_agent.0 --logfile /var/log/qemu-ga/qemu-ga.log --pidfile /var/run/qemu-ga.pid --blacklist guest-file-open guest-file-close guest-file-read guest-file-write guest-file-seek guest-file-flush --fsfreeze-hook=/usr/libexec/qemu-ga/fsfreeze-hook（启动带有的参数）
+
+
+2.3根据默认的hook回调路径在/usr/libexec/qemu-ga/fsfreeze-hook.d下面，写脚本放在它下面，即可在freeze和thaw的时候，回调，此刻可以在freeze的时候sysc进行磁盘同步，其文件名是sync.sh。而默认回调脚本fsfreeze-hook，也都在附件中。
+#!/bin/sh
+
+case "$1" in
+    freeze)
+        /bin/sync
+        echo "I'm frozen" > /tmp/freeze
+        ;;
+
+    thaw)
+        echo "I'm thawed" >> /tmp/freeze
+        ;;
+    *)
+        exit  1
+        ;;
+esac
+
+2.4 当要开始创建快照是，宿主机首先发送指令:
+virsh qemu-agent-command mycloud60 '{"execute":"guest-fsfreeze-freeze"}'
+通知虚拟机进行sync操作。然后执行如下的快照创建过程:
+
+2.5进入快照创建的流程
+a.虚拟机创建必须使用 virsh create mycloud60.xml（如此创建的是临时域），不能使用virsh define 然后start(创建的是永久域)。
+b. 清理block设备上次的job信息
+virsh blockjob mycloud60 /data/mycloud60_vda --abort
+
+c.区分是系统盘(有backingfile)还是数据盘。如果是系统盘，需要加--shallow选项。默认创建的盘大小和原来盘大小相同virsh blockcopy mycloud60  vda  /data/snapshot_mycloud60_1 --shallow --wait --verbose &>/dev/null;
+加上--wait选项是为了等待其执行完毕。
+
+
+
+d. 查看块拷贝的进度，如果到100%,则abort其块拷贝(此处有个while监控过程)
+virsh blockjob mycloud60 vda --info
+
+e. 清理block设备上次的job信息
+virsh blockjob mycloud60 /data/mycloud60_vda --abort
+
+
+3.快照创建完毕之后，发送命令： virsh qemu-agent-command mycloud60 '{"execute":"guest-fsfreeze-thaw"}' 
+来通知虚拟机快照创建完毕，恢复文件系统.
+
