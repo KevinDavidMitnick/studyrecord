@@ -1,0 +1,103 @@
+1. 安装对象网关
+在管理节点上执行命令: ceph-deploy admin cloud1
+
+2. 新建网关实例
+ceph-deploy rgw create cloud1.验证访问: http://cloud1:7480
+
+3. 修改默认配置
+[client.rgw.cloud1]
+rgw_frontends = "civetweb port=80" (http端口改为80)
+rgw dns name = trunkey.com （fqn名称）
+
+4. 修改iptables配置防火墙可达
+iptables -I INPUT 1 -i eth0 -p tcp -s 192.168.0.21(cloud1地址)/24  --dport 80 -j ACCEPT
+
+（参考印象笔记dnsmasq配置DNS）
+5. 给DNS服务器添加DNS泛域名解析(使用dnsmasq),必须和上面配置ceph.conf文件保持一致(trunkey.com )
+如下示例： vim /etc/dnsmasq.conf
+domain-needed
+local=/trunkey.com/
+address=/.trunkey.com/192.168.0.21
+expand-hosts
+cache-size=500
+log-queries
+log-facility=/var/log/dnsmasq.log
+log-async=20
+conf-dir=/etc/dnsmasq.d
+
+6. 重启服务
+systemctl restart ceph-radosgw@rgw.cloud1.service
+
+7. s3接口支持（参考ceph cookbook）
+yum install -y s3cmd
+s3cmd --configure,然后修改/root/.s3cfg如下
+host_base = trunkey.com:80
+host_bucket = %(bucket)s.trunkey.com:80
+
+s3cmd ls查看s3到ceph 的连接
+s3cmd mb s3://my-bucket 查看已经存在的bucket
+
+owncloud连接配置：
+需要配置bucket-name：my-bucket
+            dns:                trunkey.com
+            端口:                80
+            access_key,secret_key是之前创建my-bucket时，获取到的key.
+
+创建方式如下:
+radosgw-admin user create --uid="trunkey" --display-name="trunkey"
+输出如下，拷贝其中的access_key和secret_key
+{
+        "user_id": "trunkey",
+        "display_name": "trunkey",
+        "email": "",
+        "suspended": 0,
+        "max_buckets": 1000,
+        "auid": 0,
+        "subusers": [],
+        "keys": [{
+                "user": "testuser",
+                "access_key": "I0PJDPCIYZ665MW88W9R",
+                "secret_key": "dxaXZ8U90SXydYzyS5ivamEP20hkLSUViiaR+ZDA"
+        }],
+        "swift_keys": [],
+        "caps": [],
+        "op_mask": "read, write, delete",
+        "default_placement": "",
+        "placement_tags": [],
+        "bucket_quota": {
+                "enabled": false,
+                "max_size_kb": -1,
+                "max_objects": -1
+        },
+        "user_quota": {
+                "enabled": false,
+                "max_size_kb": -1,
+                "max_objects": -1
+        },
+        "temp_url_keys": []}
+
+8. 除了s3cmd验证之外，可以如下方式验证：
+yum install python-boto
+vi s3test.py
+import boto
+import boto.s3.connection
+
+access_key = 'I0PJDPCIYZ665MW88W9R'
+secret_key = 'dxaXZ8U90SXydYzyS5ivamEP20hkLSUViiaR+ZDA'
+conn = boto.connect_s3(
+        aws_access_key_id = access_key,
+        aws_secret_access_key = secret_key,
+        host = '192.168.0.21', port = 80,
+        is_secure=False, calling_format = boto.s3.connection.OrdinaryCallingFormat(),
+        )
+
+bucket = conn.create_bucket('my-new-bucket')
+    for bucket in conn.get_all_buckets():
+            print "{name}".format(
+                    name = bucket.name,
+                    created = bucket.creation_date,
+ )
+python s3test.py
+输出结果如下:(上述文件中的host-name和port改成自己的radosgwd即可)
+my-new-bucket 2015-02-16T17:09:10.000Z
+
