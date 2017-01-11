@@ -42,7 +42,9 @@
     
 	4K随机读测试，测试读IOPS fio -ioengine=libaio -bs=4k -direct=1 -thread -rw=randread -size=30G -filename=/dev/vdb -name="EBS 4KB randwrite test" -iodepth=16 -runtime=60
  	
-   512K顺序读，测试吞吐
+	512K顺序读，测试磁盘吞吐
    fio -ioengine=libaio -bs=512k -direct=1 -thread -rw=write -size=30G -filename=/dev/vdb -name="EBS 512KB seqwrite test" -iodepth=64 -runtime=60
+   
+   512K顺序写，测试磁盘吞吐
     
     
